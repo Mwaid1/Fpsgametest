@@ -1,0 +1,1037 @@
+<html><head><base href="https://enhancedfps.com/">
+<title>Enhanced FPS Arena with Dynamic Floating Cubes and Speed Control</title>
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+  }
+  #game-container {
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    position: relative;
+  }
+  #hud {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: #fff;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+  }
+  #health-container {
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
+  }
+  #health-bar {
+    width: 200px;
+    height: 20px;
+    background-color: #444;
+    margin-right: 10px;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  #health-fill {
+    width: 100%;
+    height: 100%;
+    background-color: #4CAF50;
+    transition: width 0.3s ease;
+  }
+  #ammo {
+    font-size: 36px;
+    font-weight: bold;
+  }
+  #crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    transform: translate(-50%, -50%);
+  }
+  #speed-control {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border-radius: 5px;
+  }
+  #speed-instruction {
+    color: #fff;
+    font-size: 12px;
+    margin-bottom: 5px;
+  }
+  #speed-slider {
+    width: 200px;
+  }
+  #speed-value {
+    color: #fff;
+    margin-left: 10px;
+  }
+  .menu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 2px solid #4CAF50;
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    color: #fff;
+    display: none;
+    animation: pulseGlow 4s ease-in-out infinite;
+  }
+  @keyframes pulseGlow {
+    0%, 100% { 
+      box-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
+      transform: translate(-50%, -50%) scale(1);
+    }
+    50% { 
+      box-shadow: 0 0 40px rgba(76, 175, 80, 0.8);
+      transform: translate(-50%, -50%) scale(1.05);
+    }
+  }
+  .menu h1, .menu h2, .menu button {
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  #death-menu {
+    background-color: rgba(255, 0, 0, 0.8);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 1s ease-in-out;
+  }
+  #win-menu {
+    background-color: rgba(0, 255, 0, 0.8);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 1s ease-in-out;
+  }
+  #win-menu h2 {
+    color: #fff;
+    font-size: 72px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    margin-bottom: 30px;
+    animation: pulse 2s infinite;
+  }
+  #win-menu button {
+    font-size: 24px;
+    padding: 20px 40px;
+    animation: slideIn 0.5s ease-out 0.5s both;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  #death-menu h2 {
+    color: #fff;
+    font-size: 72px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    margin-bottom: 30px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes slideIn {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .made-by {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-size: 14px;
+    opacity: 0.7;
+    animation: fadeInOut 3s ease-in-out infinite;
+  }
+  @keyframes fadeInOut {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+  #death-menu, #win-menu {
+    display: none;
+  }
+  /* Hide HUD elements by default */
+  #hud, #speed-control {
+    display: none;
+  }
+  /* Update existing styles */
+  .menu button {
+    font-size: 18px;
+    padding: 12px 24px;
+    margin: 10px;
+    background-color: rgba(0, 255, 0, 0.1);
+    color: #00ff00;
+    border: 2px solid #00ff00;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .menu button:hover {
+    background-color: rgba(0, 255, 0, 0.3);
+    box-shadow: 0 0 10px #00ff00;
+  }
+  /* Add new styles for Matrix effect */
+  .menu button::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgba(0, 255, 0, 0.2),
+      transparent
+    );
+    animation: matrix-rain 2s linear infinite;
+  }
+  @keyframes matrix-rain {
+    0% {
+      top: -100%;
+    }
+    100% {
+      top: 100%;
+    }
+  }
+  .menu button::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #00ff00;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .menu button:hover::after {
+    opacity: 1;
+  }
+  /* Add this new style for the red button */
+  .red-button {
+    background-color: rgba(255, 0, 0, 0.1) !important;
+    color: #ff0000 !important;
+    border: 2px solid #ff0000 !important;
+  }
+  .red-button:hover {
+    background-color: rgba(255, 0, 0, 0.3) !important;
+    box-shadow: 0 0 10px #ff0000 !important;
+  }
+  .red-button::before {
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgba(255, 0, 0, 0.2),
+      transparent
+    ) !important;
+  }
+  .red-button::after {
+    color: #ff0000 !important;
+  }
+  #touch-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    display: none;
+  }
+  #movement-pad {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    width: 150px;
+    height: 150px;
+  }
+  #movement-pad button {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border: none;
+    border-radius: 25px;
+    font-size: 24px;
+    color: white;
+  }
+  #move-up { top: 0; left: 50px; }
+  #move-left { top: 50px; left: 0; }
+  #move-down { bottom: 0; left: 50px; }
+  #move-right { top: 50px; right: 0; }
+  #action-buttons {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+  }
+  #action-buttons button {
+    width: 80px;
+    height: 50px;
+    margin-bottom: 10px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    color: white;
+  }
+</style>
+</head>
+<body>
+<div id="game-container">
+  <div id="hud">
+    <div id="health-container">
+      <div id="health-bar"><div id="health-fill"></div></div>
+      <span id="health">100</span>
+    </div>
+    Ammo: <span id="ammo">30</span>
+  </div>
+  <svg id="crosshair" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="48" stroke="#fff" stroke-width="2" fill="none"/>
+    <line x1="0" y1="50" x2="100" y2="50" stroke="#fff" stroke-width="2"/>
+    <line x1="50" y1="0" x2="50" y2="100" stroke="#fff" stroke-width="2"/>
+  </svg>
+  <div id="speed-control">
+    <div id="speed-instruction">Use ← → arrows to adjust speed</div>
+    <input type="range" id="speed-slider" min="0" max="200" value="100">
+    <span id="speed-value">1x</span>
+  </div>
+  <div id="touch-controls">
+    <div id="movement-pad">
+      <button id="move-up">↑</button>
+      <button id="move-left">←</button>
+      <button id="move-down">↓</button>
+      <button id="move-right">→</button>
+    </div>
+    <div id="action-buttons">
+      <button id="touch-shoot">Shoot</button>
+      <button id="touch-jump">Jump</button>
+      <button id="touch-reload">Reload</button>
+    </div>
+  </div>
+  <div id="start-menu" class="menu">
+    <h1>Enhanced FPS Arena</h1>
+    <button id="start-button" data-text="Start Game">Start Game</button>
+    <div class="made-by">Made by mwaid</div>
+  </div>
+  <div id="pause-menu" class="menu">
+    <h2>Game Paused</h2>
+    <button id="resume-button" data-text="Resume">Resume</button>
+    <button id="restart-button" data-text="Restart">Restart</button>
+    <button id="pause-main-menu-button" data-text="Main Menu">Main Menu</button>
+    <div class="made-by">Made by mwaid</div>
+  </div>
+  <div id="death-menu" class="menu">
+    <h2>Game Over</h2>
+    <button id="main-menu-button" class="red-button" data-text="Main Menu">Main Menu</button>
+    <div class="made-by">Made by mwaid</div>
+  </div>
+  <div id="win-menu" class="menu">
+    <h2>You Win!</h2>
+    <button id="win-main-menu-button" data-text="Main Menu">Main Menu</button>
+    <div class="made-by">Made by mwaid</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+  let gameState = 'start';
+  let isMouseLocked = false;
+  const startMenu = document.getElementById('start-menu');
+  const pauseMenu = document.getElementById('pause-menu');
+  const deathMenu = document.getElementById('death-menu');
+  const winMenu = document.getElementById('win-menu');
+  const startButton = document.getElementById('start-button');
+  const resumeButton = document.getElementById('resume-button');
+  const mainMenuButton = document.getElementById('main-menu-button');
+  const winMainMenuButton = document.getElementById('win-main-menu-button');
+  const restartButton = document.getElementById('restart-button');
+  const pauseMainMenuButton = document.getElementById('pause-main-menu-button');
+
+  const enemies = [];
+  const enemySpeed = 0.05;
+  let playerDamageTimer = 0;
+
+  restartButton.addEventListener('click', restartGame);
+  pauseMainMenuButton.addEventListener('click', showStartMenu);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.getElementById('game-container').appendChild(renderer.domElement);
+
+  const floorGeometry = new THREE.PlaneGeometry(50, 50);
+  const floorMaterial = new THREE.MeshBasicMaterial({ color: 0x808080, side: THREE.DoubleSide });
+  const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+  floor.rotation.x = Math.PI / 2;
+  scene.add(floor);
+
+  const wallMaterial = new THREE.MeshBasicMaterial({ color: 0xa0a0a0 });
+  const wallGeometry = new THREE.PlaneGeometry(50, 10);
+
+  const wall1 = new THREE.Mesh(wallGeometry, wallMaterial);
+  wall1.position.set(0, 5, -25);
+  scene.add(wall1);
+
+  const wall2 = new THREE.Mesh(wallGeometry, wallMaterial);
+  wall2.position.set(0, 5, 25);
+  wall2.rotation.y = Math.PI;
+  scene.add(wall2);
+
+  const wall3 = new THREE.Mesh(wallGeometry, wallMaterial);
+  wall3.position.set(-25, 5, 0);
+  wall3.rotation.y = Math.PI / 2;
+  scene.add(wall3);
+
+  const wall4 = new THREE.Mesh(wallGeometry, wallMaterial);
+  wall4.position.set(25, 5, 0);
+  wall4.rotation.y = -Math.PI / 2;
+  scene.add(wall4);
+
+  const roofGeometry = new THREE.PlaneGeometry(50, 50);
+  const roofMaterial = new THREE.MeshBasicMaterial({ color: 0x606060, side: THREE.DoubleSide });
+  const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+  roof.position.set(0, 10, 0);
+  roof.rotation.x = Math.PI / 2;
+  scene.add(roof);
+
+  camera.position.y = 1.6;
+
+  const gunGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.3);
+  const gunMaterial = new THREE.MeshBasicMaterial({ color: 0x333333 });
+  const gun = new THREE.Mesh(gunGeometry, gunMaterial);
+  gun.position.set(0.2, -0.2, -0.5);
+  camera.add(gun);
+  scene.add(camera);
+
+  let health = 100;
+  let ammo = 30;
+  let cubesDestroyed = 0;
+
+  const moveSpeed = 0.1;
+  let isJumping = false;
+  let jumpVelocity = 0;
+  const gravity = 0.01;
+  const jumpStrength = 0.2;
+  const keys = {};
+  let isZoomed = false;
+  const normalFOV = 75;
+  const zoomedFOV = 30;
+
+  document.addEventListener('keydown', (e) => keys[e.code] = true);
+  document.addEventListener('keyup', (e) => keys[e.code] = false);
+
+  function movePlayer() {
+    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+
+    const newPosition = camera.position.clone();
+
+    if (keys['KeyW']) newPosition.add(forward.multiplyScalar(moveSpeed));
+    if (keys['KeyS']) newPosition.sub(forward.multiplyScalar(moveSpeed));
+    if (keys['KeyA']) newPosition.sub(right.multiplyScalar(moveSpeed));
+    if (keys['KeyD']) newPosition.add(right.multiplyScalar(moveSpeed));
+
+    newPosition.y += jumpVelocity;
+    jumpVelocity -= gravity;
+
+    if (newPosition.y <= 1.6) {
+      newPosition.y = 1.6;
+      isJumping = false;
+      jumpVelocity = 0;
+    }
+
+    const margin = 0.5;
+    newPosition.x = Math.max(-24.5 + margin, Math.min(24.5 - margin, newPosition.x));
+    newPosition.z = Math.max(-24.5 + margin, Math.min(24.5 - margin, newPosition.z));
+
+    camera.position.copy(newPosition);
+  }
+
+  const cubes = [];
+  const cubeSize = 1;
+  const numCubes = 25;
+
+  for (let i = 0; i < numCubes; i++) {
+    const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+    const cubeMaterial = new THREE.MeshBasicMaterial({ color: Math.random() > 0.5 ? 0x00ff00 : 0xff0000 });
+    const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+    cube.position.set(
+      Math.random() * 40 - 20,
+      Math.random() * 8 + 1,
+      Math.random() * 40 - 20
+    );
+    scene.add(cube);
+    cubes.push({
+      mesh: cube,
+      velocity: new THREE.Vector3(
+        (Math.random() - 0.5) * 0.02,
+        (Math.random() - 0.5) * 0.02,
+        (Math.random() - 0.5) * 0.02
+      ),
+      lastColorChange: 0
+    });
+  }
+
+  function createExplosion(position) {
+    const particleCount = 20;
+    const particles = [];
+    
+    for (let i = 0; i < particleCount; i++) {
+      const geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+      const material = new THREE.MeshBasicMaterial({ color: 0xffa500 });
+      const particle = new THREE.Mesh(geometry, material);
+      
+      particle.position.copy(position);
+      scene.add(particle);
+      
+      const velocity = new THREE.Vector3(
+        (Math.random() - 0.5) * 0.3,
+        (Math.random() - 0.5) * 0.3,
+        (Math.random() - 0.5) * 0.3
+      );
+      
+      particles.push({ mesh: particle, velocity: velocity });
+    }
+    
+    function animateExplosion() {
+      particles.forEach((particle, index) => {
+        particle.mesh.position.add(particle.velocity);
+        particle.mesh.scale.multiplyScalar(0.95);
+        
+        if (particle.mesh.scale.x < 0.01) {
+          scene.remove(particle.mesh);
+          particles.splice(index, 1);
+        }
+      });
+      
+      if (particles.length > 0) {
+        requestAnimationFrame(animateExplosion);
+      }
+    }
+    
+    animateExplosion();
+  }
+
+  let enemyShootCooldown = 3; // 3 seconds cooldown
+  let lastEnemyShootTime = 0;
+
+  function createEnemy() {
+    const enemyGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+    const enemyMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const enemy = new THREE.Mesh(enemyGeometry, enemyMaterial);
+    
+    enemy.position.set(
+      Math.random() * 40 - 20,
+      1,
+      Math.random() * 40 - 20
+    );
+    
+    scene.add(enemy);
+    enemies.push(enemy);
+  }
+
+  function enemyShoot(enemy) {
+    const bulletGeometry = new THREE.SphereGeometry(0.05);
+    const bulletMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+
+    bullet.position.copy(enemy.position);
+
+    const direction = new THREE.Vector3().subVectors(camera.position, enemy.position).normalize();
+    bullet.userData.direction = direction;
+
+    scene.add(bullet);
+
+    const bulletSpeed = 0.2;
+
+    function animateBullet() {
+      bullet.position.add(bullet.userData.direction.clone().multiplyScalar(bulletSpeed));
+
+      if (
+        bullet.position.x < -25 || bullet.position.x > 25 ||
+        bullet.position.y < 0 || bullet.position.y > 10 ||
+        bullet.position.z < -25 || bullet.position.z > 25
+      ) {
+        scene.remove(bullet);
+      } else if (bullet.position.distanceTo(camera.position) < 0.5) {
+        scene.remove(bullet);
+        health -= 5;
+        checkHealth();
+      } else {
+        requestAnimationFrame(animateBullet);
+      }
+    }
+
+    animateBullet();
+  }
+
+  function updateEnemies(deltaTime) {
+    const currentTime = performance.now() / 1000; // Convert to seconds
+
+    enemies.forEach((enemy, index) => {
+      const direction = new THREE.Vector3().subVectors(camera.position, enemy.position).normalize();
+      enemy.position.add(direction.multiplyScalar(enemySpeed * speedMultiplier));
+
+      if (enemy.position.distanceTo(camera.position) < 1) {
+        if (playerDamageTimer <= 0) {
+          health -= 10;
+          playerDamageTimer = 1;
+        }
+      }
+
+      if (Math.abs(enemy.position.x) > 25 || Math.abs(enemy.position.z) > 25) {
+        scene.remove(enemy);
+        enemies.splice(index, 1);
+      }
+
+      // Update enemy shooting behavior
+      if (currentTime - lastEnemyShootTime > enemyShootCooldown) {
+        if (Math.random() < 0.1 * speedMultiplier) { // Reduced probability
+          enemyShoot(enemy);
+          lastEnemyShootTime = currentTime;
+        }
+      }
+    });
+
+    if (playerDamageTimer > 0) {
+      playerDamageTimer -= deltaTime;
+    }
+  }
+
+  function shoot() {
+    if (ammo > 0 && !isReloading) {
+      ammo--;
+      updateAmmoDisplay();
+      const bulletGeometry = new THREE.SphereGeometry(0.05);
+      const bulletMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+      const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+
+      bullet.position.copy(camera.position);
+      bullet.quaternion.copy(camera.quaternion);
+
+      scene.add(bullet);
+
+      const bulletSpeed = 1;
+      const bulletDirection = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+
+      function animateBullet() {
+        bullet.position.add(bulletDirection.multiplyScalar(bulletSpeed));
+
+        if (
+          bullet.position.x < -25 || bullet.position.x > 25 ||
+          bullet.position.y < 0 || bullet.position.y > 10 ||
+          bullet.position.z < -25 || bullet.position.z > 25
+        ) {
+          scene.remove(bullet);
+        } else {
+          for (let i = 0; i < cubes.length; i++) {
+            const cube = cubes[i];
+            if (bullet.position.distanceTo(cube.mesh.position) < cubeSize) {
+              scene.remove(bullet);
+              if (cube.mesh.material.color.getHex() === 0x00ff00) {
+                createExplosion(cube.mesh.position);
+                scene.remove(cube.mesh);
+                cubes.splice(i, 1);
+                cubesDestroyed++;
+                checkWinCondition();
+              } else if (cube.mesh.material.color.getHex() === 0xff0000) {
+                health = Math.max(0, health - 25);
+              }
+              return;
+            }
+          }
+
+          for (let i = 0; i < enemies.length; i++) {
+            const enemy = enemies[i];
+            if (bullet.position.distanceTo(enemy.position) < 0.5) {
+              scene.remove(bullet);
+              createExplosion(enemy.position);
+              scene.remove(enemy);
+              enemies.splice(i, 1);
+              return;
+            }
+          }
+          requestAnimationFrame(animateBullet);
+        }
+      }
+
+      animateBullet();
+
+      const recoilAmount = 0.05;
+      gun.position.z += recoilAmount;
+      setTimeout(() => {
+        gun.position.z -= recoilAmount;
+      }, 50);
+    }
+  }
+
+  const maxAmmo = 30;
+  let isReloading = false;
+
+  function reload() {
+    if (!isReloading && ammo < maxAmmo) {
+      isReloading = true;
+      setTimeout(() => {
+        ammo = maxAmmo;
+        updateAmmoDisplay();
+        isReloading = false;
+      }, 1000); 
+    }
+  }
+
+  function updateAmmoDisplay() {
+    document.getElementById('ammo').textContent = ammo;
+  }
+
+  document.addEventListener('mousedown', (e) => {
+    if (gameState === 'playing') {
+      if (e.button === 0) {
+        shoot();
+      } else if (e.button === 2) {
+        toggleZoom();
+      }
+    }
+  });
+
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'KeyR' && gameState === 'playing') {
+      reload();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && !isJumping && gameState === 'playing') {
+      isJumping = true;
+      jumpVelocity = jumpStrength;
+    }
+  });
+
+  let equalPressed = false;
+  let minusPressed = false;
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '=') equalPressed = true;
+    if (e.key === '-') minusPressed = true;
+    if (equalPressed && minusPressed) {
+      showWinScreen();
+    }
+  });
+
+  document.addEventListener('keyup', (e) => {
+    if (e.key === '=') equalPressed = false;
+    if (e.key === '-') minusPressed = false;
+  });
+
+  function updateHealthDisplay() {
+    const healthText = document.getElementById('health');
+    const healthFill = document.getElementById('health-fill');
+    healthText.textContent = Math.floor(health);
+    healthFill.style.width = `${health}%`;
+  }
+
+  function checkHealth() {
+    updateHealthDisplay();
+    if (health <= 0) {
+      gameState = 'dead';
+      deathMenu.style.display = 'flex';
+      document.exitPointerLock();
+    }
+  }
+
+  function checkWinCondition() {
+    const allCubesDestroyed = cubes.every(cube => cube.mesh.material.color.getHex() === 0x808080);
+    if (allCubesDestroyed) {
+      showWinScreen();
+    }
+  }
+
+  let speedMultiplier = 1;
+  const speedSlider = document.getElementById('speed-slider');
+  const speedValue = document.getElementById('speed-value');
+
+  speedSlider.addEventListener('input', updateSpeedValue);
+
+  document.addEventListener('keydown', (e) => {
+    if (gameState === 'playing') {
+      if (e.code === 'ArrowLeft') {
+        speedSlider.value = Math.max(0, speedSlider.value - 5);
+        updateSpeedValue();
+      } else if (e.code === 'ArrowRight') {
+        speedSlider.value = Math.min(200, Number(speedSlider.value) + 5);
+        updateSpeedValue();
+      }
+    }
+  });
+
+  function updateSpeedValue() {
+    speedMultiplier = speedSlider.value / 100;
+    speedValue.textContent = speedMultiplier.toFixed(2) + 'x';
+  }
+
+  let lastTime = 0;
+  function animate(time) {
+    requestAnimationFrame(animate);
+
+    if (gameState === 'playing') {
+      const deltaTime = (time - lastTime) / 1000;
+      lastTime = time;
+
+      movePlayer();
+      checkHealth();
+
+      if (health < 100) {
+        health = Math.min(100, health + deltaTime);
+        updateHealthDisplay();
+      }
+
+      cubes.forEach((cube) => {
+        cube.mesh.position.add(cube.velocity.clone().multiplyScalar(speedMultiplier));
+
+        if (Math.abs(cube.mesh.position.x) > 24 || Math.abs(cube.mesh.position.z) > 24) {
+          cube.velocity.x *= -1;
+          cube.velocity.z *= -1;
+        }
+
+        if (cube.mesh.position.y < 1 || cube.mesh.position.y > 9) {
+          cube.velocity.y *= -1;
+        }
+
+        if (time - cube.lastColorChange > 3000 && cube.mesh.material.color.getHex() !== 0x808080) {
+          if (Math.random() < 0.1) {
+            cube.mesh.material.color.setHex(Math.random() > 0.5 ? 0x00ff00 : 0xff0000);
+            cube.lastColorChange = time;
+          }
+        }
+      });
+
+      updateEnemies(deltaTime);
+
+      if (Math.random() < 0.005 * speedMultiplier) {
+        createEnemy();
+      }
+
+      renderer.render(scene, camera);
+    }
+  }
+  animate(0);
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  let mouseX = 0, mouseY = 0;
+  const sensitivity = 0.003;
+
+  document.addEventListener('mousemove', (e) => {
+    if (gameState === 'playing' && isMouseLocked) {
+      mouseX -= e.movementX * sensitivity;
+      mouseY -= e.movementY * sensitivity;
+
+      mouseY = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, mouseY));
+
+      camera.rotation.order = 'YXZ';
+      camera.rotation.y = mouseX;
+      camera.rotation.x = mouseY;
+    }
+  });
+
+  function toggleMouseLock() {
+    if (gameState === 'playing') {
+      if (isMouseLocked) {
+        document.exitPointerLock();
+      } else {
+        requestPointerLockWithErrorHandling();
+      }
+    }
+  }
+
+  function requestPointerLockWithErrorHandling() {
+    const container = document.getElementById('game-container');
+    container.requestPointerLock().then(() => {
+      isMouseLocked = true;
+    }).catch(error => {
+      console.warn('Pointer lock error:', error);
+    });
+  }
+
+  document.addEventListener('pointerlockchange', () => {
+    isMouseLocked = !!document.pointerLockElement;
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Escape' && gameState === 'playing') {
+      toggleMouseLock();
+    }
+  });
+
+  startButton.addEventListener('click', startGame);
+  resumeButton.addEventListener('click', resumeGame);
+  mainMenuButton.addEventListener('click', () => {
+    showStartMenu();
+    restartGame();
+  });
+  winMainMenuButton.addEventListener('click', () => {
+    showStartMenu();
+    restartGame();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'KeyP' && gameState === 'playing') {
+      pauseGame();
+    }
+  });
+
+  function resumeGame() {
+    gameState = 'playing';
+    pauseMenu.style.display = 'none';
+    if (!isTouchDevice) {
+      toggleMouseLock();
+    }
+    document.getElementById('hud').style.display = 'flex';
+    document.getElementById('speed-control').style.display = 'block';
+    if (isTouchDevice) {
+      document.getElementById('touch-controls').style.display = 'block';
+    }
+  }
+
+  function pauseGame() {
+    gameState = 'paused';
+    pauseMenu.style.display = 'block';
+    document.exitPointerLock();
+    document.getElementById('hud').style.display = 'none';
+    document.getElementById('speed-control').style.display = 'none';
+    document.getElementById('touch-controls').style.display = 'none';
+  }
+
+  function startGame() {
+    restartGame();
+    gameState = 'playing';
+    startMenu.style.display = 'none';
+    if (!isTouchDevice) {
+      toggleMouseLock();
+    }
+    document.getElementById('hud').style.display = 'flex';
+    document.getElementById('speed-control').style.display = 'block';
+    if (isTouchDevice) {
+      document.getElementById('touch-controls').style.display = 'block';
+    }
+  }
+
+  function restartGame() {
+    gameState = 'playing';
+    pauseMenu.style.display = 'none';
+    deathMenu.style.display = 'none';
+    winMenu.style.display = 'none';
+    if (!isTouchDevice) {
+      toggleMouseLock();
+    }
+
+    health = 100;
+    ammo = 30;
+    cubesDestroyed = 0;
+    updateHealthDisplay();
+    updateAmmoDisplay();
+
+    cubes.forEach((cube) => {
+      cube.mesh.position.set(
+        Math.random() * 40 - 20,
+        Math.random() * 8 + 1,
+        Math.random() * 40 - 20
+      );
+      cube.mesh.material.color.setHex(Math.random() > 0.5 ? 0x00ff00 : 0xff0000);
+    });
+
+    enemies.forEach((enemy) => {
+      scene.remove(enemy);
+    });
+    enemies.length = 0;
+
+    camera.position.set(0, 1.6, 0);
+    camera.rotation.set(0, 0, 0);
+    mouseX = 0;
+    mouseY = 0;
+  }
+
+  function showStartMenu() {
+    gameState = 'start';
+    startMenu.style.display = 'block';
+    pauseMenu.style.display = 'none';
+    deathMenu.style.display = 'none';
+    winMenu.style.display = 'none';
+    document.exitPointerLock();
+
+    document.getElementById('hud').style.display = 'none';
+    document.getElementById('speed-control').style.display = 'none';
+    document.getElementById('touch-controls').style.display = 'none';
+  }
+
+  function showWinScreen() {
+    gameState = 'win';
+    winMenu.style.display = 'flex';
+    document.exitPointerLock();
+  }
+
+  let isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+  function initTouchControls() {
+    if (isTouchDevice) {
+      document.getElementById('touch-controls').style.display = 'block';
+
+      document.getElementById('move-up').addEventListener('touchstart', () => keys['KeyW'] = true);
+      document.getElementById('move-up').addEventListener('touchend', () => keys['KeyW'] = false);
+      document.getElementById('move-left').addEventListener('touchstart', () => keys['KeyA'] = true);
+      document.getElementById('move-left').addEventListener('touchend', () => keys['KeyA'] = false);
+      document.getElementById('move-down').addEventListener('touchstart', () => keys['KeyS'] = true);
+      document.getElementById('move-down').addEventListener('touchend', () => keys['KeyS'] = false);
+      document.getElementById('move-right').addEventListener('touchstart', () => keys['KeyD'] = true);
+      document.getElementById('move-right').addEventListener('touchend', () => keys['KeyD'] = false);
+
+      document.getElementById('touch-shoot').addEventListener('touchstart', shoot);
+      document.getElementById('touch-jump').addEventListener('touchstart', jump);
+      document.getElementById('touch-reload').addEventListener('touchstart', reload);
+    }
+  }
+
+  function jump() {
+    if (!isJumping && gameState === 'playing') {
+      isJumping = true;
+      jumpVelocity = jumpStrength;
+    }
+  }
+
+  initTouchControls();
+  showStartMenu();
+</script>
+</body>
+</html>
